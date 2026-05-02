@@ -2,6 +2,7 @@ import uvicorn
 from fastapi import FastAPI
 from auth import auth
 from users import protected
+from foodlog import food_router
 from database import Base, engine
 from contextlib import asynccontextmanager
 
@@ -13,10 +14,11 @@ async def lifespan(app: FastAPI):
     yield
     await engine.dispose()
     
- # Initialize FastAPI app and include authentication routes   
+# Initialize FastAPI app and include authentication routes   
 app = FastAPI(lifespan=lifespan)
 app.include_router(auth)
 app.include_router(protected)
+app.include_router(food_router)
 
 # Run the application
 if __name__ == "__main__":

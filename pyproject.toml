@@ -9,6 +9,7 @@ dependencies = [
     "fastapi-mail>=1.6.2",
     "fastapi[standard]>=0.136.0",
     "greenlet>=3.4.0",
+    "openfoodfacts>=5.0.1",
     "pwdlib[argon2]>=0.3.0",
     "pyjwt>=2.12.1",
     "resend>=2.29.0",
