@@ -53,6 +53,40 @@ class UserProfileCreate(BaseModel):
     weight_loss_goal: WeightLoseGoal
     target_date: date
     activity_level: ActivityLevel
+    
+    @field_validator('height')
+    @classmethod
+    def validate_height(cls, value: float) -> float:
+        if value <= 0:
+            raise ValueError('Height must be positive')
+        if value >= 300:
+            raise ValueError('Height must be realistic (less than 300 inches)')
+        return value
+    
+    @field_validator('start_weight')
+    @classmethod
+    def validate_start_weight(cls, value: float) -> float:
+        if value <= 0:
+            raise ValueError('Weight must be positive')
+        if value >= 500:
+            raise ValueError('Weight must be realistic (less than 500 kg)')
+        return value
+    
+    @field_validator('goal_weight')
+    @classmethod
+    def validate_goal_weight(cls, value: float) -> float:
+        if value <= 0:
+            raise ValueError('Goal weight must be positive')
+        if value >= 500:
+            raise ValueError('Goal weight must be realistic (less than 500 kg)')
+        return value
+    
+    @field_validator('target_date')
+    @classmethod
+    def validate_target_date(cls, value: date) -> date:
+        if value <= date.today():
+            raise ValueError('Target date must be in the future')
+        return value
 
 # UserProfileResponse model for user profile response
 class UserProfileResponse(BaseModel):
@@ -84,6 +118,43 @@ class EditUserProfile(BaseModel):
     weight_loss_goal: WeightLoseGoal|None
     target_date: date|None
     activity_level: ActivityLevel|None
+    
+    @field_validator('height')
+    @classmethod
+    def validate_height(cls, value: float|None) -> float|None:
+        if value is not None:
+            if value <= 0:
+                raise ValueError('Height must be positive')
+            if value >= 300:
+                raise ValueError('Height must be realistic (less than 300 inches)')
+        return value
+    
+    @field_validator('start_weight')
+    @classmethod
+    def validate_start_weight(cls, value: float|None) -> float|None:
+        if value is not None:
+            if value <= 0:
+                raise ValueError('Weight must be positive')
+            if value >= 500:
+                raise ValueError('Weight must be realistic (less than 500 kg)')
+        return value
+    
+    @field_validator('goal_weight')
+    @classmethod
+    def validate_goal_weight(cls, value: float|None) -> float|None:
+        if value is not None:
+            if value <= 0:
+                raise ValueError('Goal weight must be positive')
+            if value >= 500:
+                raise ValueError('Goal weight must be realistic (less than 500 kg)')
+        return value
+    
+    @field_validator('target_date')
+    @classmethod
+    def validate_target_date(cls, value: date|None) -> date|None:
+        if value is not None and value <= date.today():
+            raise ValueError('Target date must be in the future')
+        return value
 
 # Token model for JWT token response
 class Token(BaseModel):
@@ -143,12 +214,32 @@ class LogFood(BaseModel):
 
     @field_validator('serving_size')
     @classmethod
-    def change_to_float(cls, value: str, info: ValidationInfo) -> float:
-        if isinstance(value, float):
-            return value
-        numeric_value = re.sub(r'[^0-9.]', '', value) 
-        final_float = float(numeric_value)
+    def validate_serving_size(cls, value: str|float) -> float:
+        # Convert to float if string
+        if isinstance(value, str):
+            numeric_value = re.sub(r'[^0-9.]', '', value)
+            final_float = float(numeric_value)
+        else:
+            final_float = value
+        
+        # Validate that it's positive
+        if final_float <= 0:
+            raise ValueError('Serving size must be greater than zero')
         return final_float
+    
+    @field_validator('date')
+    @classmethod
+    def validate_date_not_future(cls, value: datetime) -> datetime:
+        if value > datetime.now():
+            raise ValueError('Date cannot be in the future')
+        return value
+    
+    @field_validator('calories')
+    @classmethod
+    def validate_calories_non_negative(cls, value: float) -> float:
+        if value < 0:
+            raise ValueError('Calories cannot be negative')
+        return value
     
 class FoodLogResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -179,6 +270,27 @@ class EditFoodEntry(BaseModel):
     carbs: float|None
     fat: float|None
     sugar: float|None
+    
+    @field_validator('date')
+    @classmethod
+    def validate_date_not_future(cls, value: datetime|None) -> datetime|None:
+        if value is not None and value > datetime.now():
+            raise ValueError('Date cannot be in the future')
+        return value
+    
+    @field_validator('calories')
+    @classmethod
+    def validate_calories_non_negative(cls, value: float|None) -> float|None:
+        if value is not None and value < 0:
+            raise ValueError('Calories cannot be negative')
+        return value
+    
+    @field_validator('serving_size')
+    @classmethod
+    def validate_serving_size_positive(cls, value: float|None) -> float|None:
+        if value is not None and value <= 0:
+            raise ValueError('Serving size must be greater than zero')
+        return value
 
 class DashboardResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)

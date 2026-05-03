@@ -13,7 +13,7 @@ protected = APIRouter( prefix="/users", tags=["users"], dependencies=[Depends(ge
 # Endpoint to create user profile
 @protected.post("/create_profile", status_code=201, response_model=UserProfileResponse)
 async def create_profile(profile: UserProfileCreate, user = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    db_result = await db.execute(select(UserProfile).filter(UserProfile.user_id == user.id))
+    db_result = await db.execute(select(UserProfile).where(UserProfile.user_id == user.id))
     existing_user = db_result.scalar_one_or_none()
     if existing_user:
         raise HTTPException(status_code=400, detail="User profile is already created")

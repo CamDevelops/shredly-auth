@@ -26,7 +26,7 @@ def calculate_age(birth_date):
 def calculate_calories(sex, weight, height, age, activity_level, weight_lose_goal): 
     weight_kg = weight / 2.20462
 
-    height_cm = height * 30.48
+    height_cm = height * 2.54
 
     if sex == Sex.MALE:
         bmr = (10 * weight_kg) + (6.25 * height_cm) - (5 * age) + 5

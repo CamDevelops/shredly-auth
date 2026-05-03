@@ -29,7 +29,6 @@ async def register_user(user: CreateUser, db: AsyncSession = Depends(get_db)):
         username=user.username,
         hashed_password=hashed_password
     )
-
     db.add(new_user)
     await db.commit()
     return {"message": "User created successfully."}
@@ -52,11 +51,11 @@ async def login_user(response: Response, form_data: OAuth2PasswordRequestForm = 
     )
     db.add(refreshed_token)
     await db.commit()
-    response.set_cookie(key="refresh_token", value=re_token, httponly=True)
+    response.set_cookie(key="refresh_token", value=re_token, httponly=True, secure=True, samesite="lax")
     return {"access_token": create_access_token({"sub": str(user.id)}), "token_type": "bearer"}
 
 @auth.get("refresh/token")
-async def refresh_token(request: Request, db: AsyncSession = Depends(get_db)):
+async def refresh_access_token(request: Request, db: AsyncSession = Depends(get_db)):
     token = request.cookies.get("refresh_token")
     time = datetime.now(timezone.utc)
     db_result = await db.execute(select(RefreshToken).where(RefreshToken.token == token).where(RefreshToken.token_expiry > time))
@@ -73,7 +72,7 @@ async def send_reset_password_email(email: ForgotPassword, background_task: Back
     if not valid_email:
         raise HTTPException(status_code=404, detail="No user found with the provided email address.")
     token = create_access_token({"sub": str(valid_email.id)}, expires_delta=timedelta(minutes=30))
-    reset_link = f"http://localhost:3000/reset-password?token={token}"
+    reset_link = f"{settings.FRONTEND_URL}/reset-password?token={token}"
     background_task.add_task(password_reset_email, email.email, reset_link)
     return {"message": "Password reset email has been sent, check your inbox."}
 
@@ -94,3 +93,15 @@ async def reset_password(token: str, password: ResetPassword, db: AsyncSession =
         raise HTTPException(status_code=401, detail="reset link has expired.")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid reset link.")
+
+@auth.delete("/logout")
+async def sign_out(request: Request, response: Response, db: AsyncSession = Depends(get_db)):
+    token = request.cookies.get("refresh_token")
+    db_result = await db.execute(select(RefreshToken).where(RefreshToken.token == token))
+    user_token = db_result.scalar_one_or_none()
+    if not user_token:
+        raise HTTPException(status_code=401, detail="User token is not found")
+    db.delete(user_token)
+    await db.commit()
+    response.delete_cookie("refresh_token")
+    return {"message": "You have been succefully signed out"}

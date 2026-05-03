@@ -13,5 +13,6 @@ class Settings(BaseSettings):
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     RESEND_API_KEY: SecretStr
+    FRONTEND_URL: str
 
 settings = Settings()

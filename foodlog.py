@@ -34,7 +34,6 @@ async def get_food_item(search: str):
 async def get_food_by_barcode(barcode: str):
     try:
         food_item = api.product.get(barcode)
-        print(food_item)
         if food_item is None:
             raise HTTPException(status_code=404, detail="Food item not found.")
         if not food_item.get("product"):
@@ -98,7 +97,7 @@ async def delete_food(food_id: int, user = Depends(get_current_user), db: AsyncS
     user_food_item = db_result.scalar_one_or_none()
     if not user_food_item:
         raise HTTPException(status_code=404, detail="Food Entry not found")
-    await db.delete(user_food_item)
+    db.delete(user_food_item)
     await db.commit()
 
 @food_router.get("/food_log", status_code=200)
